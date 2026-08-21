@@ -9,3 +9,6 @@ Plataforma distribuida para la gestión y articulación de servicios universitar
 - Juan José — Developer
 - Carlos — Developer
 - Juan David — Developer
+## Flujo de trabajo
+
+Este repositorio utiliza ramas y Pull Requests para integrar cambios a main.
