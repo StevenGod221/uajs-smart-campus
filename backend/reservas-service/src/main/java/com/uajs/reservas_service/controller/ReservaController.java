@@ -78,4 +78,15 @@ public class ReservaController {
 
         return ResponseEntity.noContent().build();
     }
+    
+    @PutMapping("/{id}")
+public ResponseEntity<ReservaResponse> actualizar(
+        @PathVariable Long id,
+        @Valid @RequestBody ReservaRequest request) {
+
+    return ResponseEntity.ok(
+            service.actualizar(id, request)
+    );
+}
+
 }

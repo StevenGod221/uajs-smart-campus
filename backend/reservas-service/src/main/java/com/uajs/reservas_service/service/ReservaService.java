@@ -132,4 +132,24 @@ public class ReservaService {
                 reserva.getObservaciones()
         );
     }
+    public ReservaResponse actualizar(Long id, ReservaRequest request) {
+
+    Reserva reserva = repository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException("Reserva no encontrada"));
+
+    if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
+        throw new IllegalArgumentException(
+                "La fecha final debe ser posterior a la fecha inicial"
+        );
+    }
+
+    reserva.setUsuarioId(request.getUsuarioId());
+    reserva.setRecursoId(request.getRecursoId());
+    reserva.setFechaInicio(request.getFechaInicio());
+    reserva.setFechaFin(request.getFechaFin());
+    reserva.setObservaciones(request.getObservaciones());
+
+    return convertir(repository.save(reserva));
+}
 }
