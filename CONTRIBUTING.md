@@ -75,3 +75,43 @@ Se requiere al menos una revisión antes del merge.
 ## main
 
 La rama `main` contiene únicamente código integrado y revisado.
+
+
+## Flujo de trabajo
+
+El desarrollo del proyecto se organiza mediante ramas relacionadas con cada integrante y funcionalidad
+
+## Ramas
+
+- main
+- feature/steven-integracion
+- feature/moises-usuarios
+- feature/juan-jose-solicitudes
+- feature/carlos-reservas
+- feature/juan-david-recursos
+
+## Flujo
+
+1. Actualizar la rama
+2. Crear o utilizar una rama feature
+3. Realizar cambios
+4. Probar localmente
+5. Hacer commit
+6. Subir la rama
+7. Crear Pull Request cuando corresponda
+8. Revisar
+9. Integrar a main
+
+## Commits
+
+Se recomienda utilizar mensajes claros
+
+Ejemplos:
+
+```text
+feat: agrega endpoint de solicitudes
+feat: implementa login con JWT
+feat: agrega validacion de reservas
+feat: implementa CRUD de recursos
+fix: corrige ruta del API Gateway
+docs: actualiza documentacion tecnica

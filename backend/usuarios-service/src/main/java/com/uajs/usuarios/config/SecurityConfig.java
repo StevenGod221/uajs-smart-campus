@@ -70,6 +70,7 @@ public class SecurityConfig {
 
                     // Rutas públicas
                     .requestMatchers(
+                            "/health",
                             "/api/usuarios/login",
                             "/api/usuarios/health"
                     ).permitAll()
@@ -115,7 +116,6 @@ public class SecurityConfig {
             // ------------------------------------------
 
             .exceptionHandling(exception ->
-
                     exception
 
                             // 401 - No autenticado

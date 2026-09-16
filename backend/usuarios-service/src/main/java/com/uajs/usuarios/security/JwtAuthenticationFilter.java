@@ -42,9 +42,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
+        // ==========================================
+        // RUTAS PÚBLICAS
+        // ==========================================
+
+        String path = request.getServletPath();
+
+        if (path.equals("/health") ||
+                path.equals("/api/usuarios/health") ||
+                path.equals("/api/usuarios/login")) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // ==========================================
+        // OBTENER TOKEN JWT
+        // ==========================================
+
         String authorizationHeader =
                 request.getHeader("Authorization");
 
+        // Si no hay token, continuar.
+        // Spring Security decidirá después si la ruta
+        // requiere autenticación.
         if (authorizationHeader == null ||
                 !authorizationHeader.startsWith("Bearer ")) {
 
@@ -52,10 +73,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // ==========================================
+        // EXTRAER TOKEN
+        // ==========================================
+
         String token =
                 authorizationHeader.substring(7);
 
         try {
+
+            // ==========================================
+            // VALIDAR TOKEN
+            // ==========================================
 
             Claims claims = Jwts.parser()
                     .verifyWith(key)
@@ -69,6 +98,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var authorities = List.of(
                     new SimpleGrantedAuthority("ROLE_" + rol)
             );
+
+            // ==========================================
+            // CREAR AUTENTICACIÓN
+            // ==========================================
 
             var authentication =
                     new UsernamePasswordAuthenticationToken(
