@@ -1,0 +1,114 @@
+Microservicios
+Servicio	   Puerto
+Usuarios	    8081
+Solicitudes	    8082
+Reservas	    8083
+Recursos	    8084
+Notificaciones	8085
+Eventos	        8086
+
+Frontend
+
+Puerto:5173
+
+Gateway
+
+Puerto:8080
+
+Health:
+
+http://localhost:8080/health
+
+Integraciones principales
+
+El proyecto demuestra:
+
+React
+ ↓
+API Gateway
+ ↓
+Solicitudes Service
+
+y
+
+React
+ ↓
+API Gateway
+ ↓
+Reservas Service
+Funcionalidades
+Login
+Dashboard
+Solicitudes
+Reservas
+Recursos
+Eventos
+Notificaciones
+Perfil
+PQRS
+Tecnologías
+React
+Vite
+React Router
+Java
+Spring Boot
+Maven
+REST
+JSON
+MySQL
+
+Equipo
+Steven Tovar Merlano
+
+Líder técnico, arquitectura, API Gateway, integración y frontend
+
+Moisés
+
+Usuarios, autenticación y seguridad
+
+Juan José
+
+Solicitudes y eventos
+
+Carlos
+
+Reservas
+
+Juan David
+
+Recursos, pruebas y evidencias
+
+Seguridad
+
+No subir al repositorio:
+
+Contraseñas
+Tokens
+Secretos JWT
+Archivos .env
+Credenciales
+Información sensible
+node_modules
+
+---
+
+# 12. ClickUp: créalo exactamente así
+
+## SPACE
+
+```text
+Sistemas Distribuidos
+FOLDER
+Proyecto Integrador – UAJS Smart Campus
+LISTS
+📋 Product Backlog
+🏁 Sprint 0
+🚀 Sprint 1
+⚙️ Sprint 2
+🎯 Sprint 3
+ESTADOS
+⚪ BACKLOG
+🔵 POR HACER
+🟡 EN PROGRESO
+🟠 EN REVISIÓN
+🟢 TERMINADO

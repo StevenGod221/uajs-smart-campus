@@ -1,14 +1,20 @@
+
+---
+
+# 11. `README.md`
+
+```markdown
 # UAJS Smart Campus
 
-Plataforma distribuida para la gestión y articulación de servicios universitarios.
+Sistema distribuido para la gestión de servicios, solicitudes, reservas, recursos, eventos y notificaciones de la comunidad universitaria
 
-## Equipo
+# Arquitectura
 
-- Steven — Scrum Master + Developer
-- Moisés — Developer
-- Juan José — Developer
-- Carlos — Developer
-- Juan David — Developer
-## Flujo de trabajo
-
-Este repositorio utiliza ramas y Pull Requests para integrar cambios a main.
+```text
+Usuario
+   ↓
+React :5173
+   ↓
+API Gateway :8080
+   ↓
+Microservicios
