@@ -1,3 +1,4 @@
+
 package com.uajs.reservas_service.repository;
 
 import com.uajs.reservas_service.entity.Reserva;
@@ -16,6 +17,13 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     boolean existsByRecursoIdAndFechaInicioLessThanAndFechaFinGreaterThan(
             Long recursoId,
+            LocalDateTime fechaFin,
+            LocalDateTime fechaInicio
+    );
+
+    boolean existsByRecursoIdAndIdNotAndFechaInicioLessThanAndFechaFinGreaterThan(
+            Long recursoId,
+            Long id,
             LocalDateTime fechaFin,
             LocalDateTime fechaInicio
     );

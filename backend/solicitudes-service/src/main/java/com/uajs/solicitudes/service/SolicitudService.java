@@ -61,7 +61,23 @@ public class SolicitudService {
                 .map(this::convertir)
                 .toList();
     }
+public SolicitudResponse actualizar(Long id, SolicitudRequest request) {
 
+    Solicitud solicitud = repository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException("Solicitud no encontrada"));
+
+    solicitud.setUsuarioId(request.getUsuarioId());
+    solicitud.setServicioId(request.getServicioId());
+    solicitud.setTipo(request.getTipo());
+    solicitud.setDependencia(request.getDependencia());
+    solicitud.setDescripcion(request.getDescripcion());
+    solicitud.setPrioridad(request.getPrioridad());
+
+    Solicitud actualizada = repository.save(solicitud);
+
+    return convertir(actualizada);
+}
    public SolicitudResponse actualizarEstado(Long id, String nuevoEstado) {
 
     Solicitud solicitud = repository.findById(id)

@@ -41,6 +41,15 @@ public class SolicitudController {
 
         return ResponseEntity.ok(service.buscarPorId(id));
     }
+    @PutMapping("/{id}")
+public ResponseEntity<SolicitudResponse> actualizar(
+        @PathVariable Long id,
+        @Valid @RequestBody SolicitudRequest request) {
+
+    return ResponseEntity.ok(
+            service.actualizar(id, request)
+    );
+}
 
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<List<SolicitudResponse>> buscarPorUsuario(

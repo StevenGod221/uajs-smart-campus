@@ -58,21 +58,24 @@ public Optional<Usuario> login(String correo, String password) {
 
     public Optional<Usuario> actualizar(Long id, Usuario datos) {
 
-        return usuarioRepository.findById(id)
-                .map(usuario -> {
+    return usuarioRepository.findById(id)
+            .map(usuario -> {
+                usuario.setNombre(datos.getNombre());
+                usuario.setApellido(datos.getApellido());
+                usuario.setCorreo(datos.getCorreo());
 
-                    usuario.setNombre(datos.getNombre());
-                    usuario.setApellido(datos.getApellido());
-                    usuario.setCorreo(datos.getCorreo());
-                    usuario.setPassword(datos.getPassword());
-                    usuario.setRol(datos.getRol());
-                    usuario.setPrograma(datos.getPrograma());
-                    usuario.setDependencia(datos.getDependencia());
-                    usuario.setEstado(datos.getEstado());
+                usuario.setPassword(
+                        passwordEncoder.encode(datos.getPassword())
+                );
 
-                    return usuarioRepository.save(usuario);
-                });
-    }
+                usuario.setRol(datos.getRol());
+                usuario.setPrograma(datos.getPrograma());
+                usuario.setDependencia(datos.getDependencia());
+                usuario.setEstado(datos.getEstado());
+
+                return usuarioRepository.save(usuario);
+            });
+}
 
     public boolean eliminar(Long id) {
 

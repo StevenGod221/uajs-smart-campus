@@ -20,6 +20,14 @@ public class EventoController {
         this.service = service;
     }
 
+@PutMapping("/{id}")
+public ResponseEntity<EventoResponse> actualizar(
+        @PathVariable Long id,
+        @Valid @RequestBody EventoRequest request) {
+
+    return ResponseEntity.ok(service.actualizar(id, request));
+}
+
     @PostMapping
     public ResponseEntity<EventoResponse> crear(
             @Valid @RequestBody EventoRequest request) {

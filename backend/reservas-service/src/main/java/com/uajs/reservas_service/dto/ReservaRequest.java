@@ -1,23 +1,28 @@
 package com.uajs.reservas_service.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
 public class ReservaRequest {
 
-    @NotNull
+    @NotNull(message = "El ID del usuario es obligatorio")
+    @Positive(message = "El ID del usuario debe ser positivo")
     private Long usuarioId;
 
-    @NotNull
+    @NotNull(message = "El ID del recurso es obligatorio")
+    @Positive(message = "El ID del recurso debe ser positivo")
     private Long recursoId;
 
-    @NotNull
+    @NotNull(message = "La fecha de inicio es obligatoria")
     private LocalDateTime fechaInicio;
 
-    @NotNull
+    @NotNull(message = "La fecha de finalización es obligatoria")
     private LocalDateTime fechaFin;
 
+    @Size(max = 500, message = "Las observaciones no pueden superar 500 caracteres")
     private String observaciones;
 
     public Long getUsuarioId() {

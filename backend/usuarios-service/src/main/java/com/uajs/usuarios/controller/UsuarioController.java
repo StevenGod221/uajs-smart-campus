@@ -142,16 +142,17 @@ public ResponseEntity<UsuarioResponse> actualizarUsuario(
 
     datos.setNombre(request.getNombre());
     datos.setApellido(request.getApellido());
+    datos.setCorreo(request.getCorreo());
+    datos.setPassword(request.getPassword());
+    datos.setRol(request.getRol());
     datos.setPrograma(request.getPrograma());
     datos.setDependencia(request.getDependencia());
     datos.setEstado(request.getEstado());
 
-    return usuarioService
-            .actualizar(id, datos)
+    return usuarioService.actualizar(id, datos)
             .map(UsuarioResponse::new)
             .map(ResponseEntity::ok)
-            .orElseGet(() ->
-                    ResponseEntity.notFound().build());
+            .orElseGet(() -> ResponseEntity.notFound().build());
 }
 @DeleteMapping("/{id}")
 public ResponseEntity<?> eliminarUsuario(

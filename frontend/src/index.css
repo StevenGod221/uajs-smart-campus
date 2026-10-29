@@ -2109,3 +2109,121 @@ td strong {
         text-align: center;
     }
 }
+
+/* =========================================================
+   CORRECCION DE MODALES Y DETALLES
+========================================================= */
+
+.modal-card {
+    width: min(650px, 100%);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: #ffffff;
+    color: #172033;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+    animation: modalIn 0.2s ease;
+}
+
+.modal-card .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 23px 25px 18px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.modal-card .modal-header h2 {
+    margin: 6px 0 0;
+    font-family: "Manrope", sans-serif;
+    font-size: 20px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.modal-card .icon-button {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e6eaf0;
+    border-radius: 10px;
+    background: #f5f7fb;
+    color: #475569;
+    cursor: pointer;
+}
+
+.modal-card .icon-button:hover {
+    background: #eaf1fb;
+    color: #173b72;
+}
+
+.detail-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 23px 25px;
+}
+
+.detail-item {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #e6eaf0;
+    border-radius: 13px;
+    background: #f8faff;
+}
+
+.detail-item > span {
+    display: block;
+    margin-bottom: 8px;
+    color: #718096;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.detail-item > strong {
+    display: block;
+    color: #172033;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.detail-item > p {
+    margin: 0;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.modal-card .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 25px 24px;
+}
+
+@media (max-width: 600px) {
+    .modal-card {
+        width: 100%;
+        max-height: calc(100vh - 20px);
+        border-radius: 16px;
+    }
+
+    .modal-card .modal-header {
+        padding: 18px;
+    }
+
+    .detail-content {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    .modal-card .modal-actions {
+        padding: 0 18px 18px;
+    }
+}

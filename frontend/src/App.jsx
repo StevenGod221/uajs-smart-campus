@@ -39,6 +39,9 @@ import {
     obtenerNotificaciones,
     marcarNotificacionLeida,
     obtenerEventos,
+    crearEvento,
+    actualizarEvento,
+    eliminarEvento,
     obtenerSolicitudes,
     crearSolicitud,
     obtenerSolicitud,
@@ -435,14 +438,9 @@ function App() {
 
 
                     {pagina === "eventos" && (
-    <SimplePage
-        titulo="Eventos"
-        descripcion="Consulta las actividades y eventos programados dentro del campus."
-        eyebrow="ACTIVIDADES UNIVERSITARIAS"
-        icon={<CalendarDays size={27} />}
-        datos={eventos}
+    <EventosPage
+        eventos={eventos}
         recargar={cargarDatos}
-        boton="Actualizar eventos"
     />
 )}
 
@@ -742,8 +740,11 @@ function SolicitudesPage({ solicitudes, recargar }) {
     const [busqueda, setBusqueda] = useState("");
     const [mostrarForm, setMostrarForm] = useState(false);
     const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
+    const [solicitudEditar, setSolicitudEditar] = useState(null);
+    const [procesando, setProcesando] = useState(false);
+    const [error, setError] = useState("");
 
-    const filtradas = solicitudes.filter((s) => {
+    const filtradas = (solicitudes || []).filter((s) => {
         const texto = busqueda.toLowerCase();
 
         return (
@@ -754,24 +755,68 @@ function SolicitudesPage({ solicitudes, recargar }) {
         );
     });
 
+    const abrirEdicion = (solicitud) => {
+        setSolicitudEditar(solicitud);
+        setMostrarForm(true);
+        setSolicitudSeleccionada(null);
+    };
+
+    const cerrarFormulario = () => {
+        setMostrarForm(false);
+        setSolicitudEditar(null);
+    };
+
+    const eliminar = async (solicitud) => {
+        const confirmar = window.confirm(
+            `¿Deseas eliminar la solicitud #${solicitud.id}?`
+        );
+
+        if (!confirmar) return;
+
+        setProcesando(true);
+        setError("");
+
+        try {
+            await eliminarSolicitud(solicitud.id);
+            await recargar();
+
+            if (solicitudSeleccionada?.id === solicitud.id) {
+                setSolicitudSeleccionada(null);
+            }
+        } catch (err) {
+            setError(
+                err.message || "No fue posible eliminar la solicitud"
+            );
+        } finally {
+            setProcesando(false);
+        }
+    };
+
     return (
         <>
             <PageHeader
                 eyebrow="GESTIÓN ACADÉMICA"
                 titulo="Solicitudes"
-                descripcion="Registra, consulta y realiza seguimiento a tus solicitudes universitarias."
+                descripcion="Registra, consulta, edita y realiza seguimiento a tus solicitudes universitarias."
                 icon={<ClipboardList size={27} />}
                 boton="Nueva solicitud"
-                onClick={() => setMostrarForm(true)}
+                onClick={() => {
+                    setSolicitudEditar(null);
+                    setMostrarForm(true);
+                }}
             />
 
+            {error && (
+                <div className="error-banner">
+                    <AlertCircle size={18} />
+                    <span>{error}</span>
+                </div>
+            )}
+
             <section className="content-card">
-
                 <div className="table-toolbar">
-
                     <div className="search-box">
                         <Search size={18} />
-
                         <input
                             type="text"
                             placeholder="Buscar solicitud..."
@@ -783,37 +828,33 @@ function SolicitudesPage({ solicitudes, recargar }) {
                     <button
                         className="secondary-button"
                         onClick={recargar}
+                        disabled={procesando}
                     >
                         <RefreshCw size={17} />
                         Actualizar
                     </button>
-
                 </div>
 
                 {filtradas.length === 0 ? (
                     <div className="empty-state">
                         <ClipboardList size={42} />
-
                         <h3>No hay solicitudes</h3>
-
-                        <p>
-                            Todavía no existen solicitudes registradas.
-                        </p>
+                        <p>Todavía no existen solicitudes registradas.</p>
 
                         <button
                             className="primary-button"
-                            onClick={() => setMostrarForm(true)}
+                            onClick={() => {
+                                setSolicitudEditar(null);
+                                setMostrarForm(true);
+                            }}
                         >
                             <Plus size={18} />
                             Crear solicitud
                         </button>
                     </div>
                 ) : (
-
                     <div className="table-container">
-
                         <table className="data-table">
-
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -827,15 +868,10 @@ function SolicitudesPage({ solicitudes, recargar }) {
                             </thead>
 
                             <tbody>
-
                                 {filtradas.map((solicitud) => (
-
                                     <tr key={solicitud.id}>
-
                                         <td>
-                                            <strong>
-                                                #{solicitud.id}
-                                            </strong>
+                                            <strong>#{solicitud.id}</strong>
                                         </td>
 
                                         <td>
@@ -857,8 +893,7 @@ function SolicitudesPage({ solicitudes, recargar }) {
                                                     solicitud.prioridad ?? ""
                                                 ).toLowerCase()}`}
                                             >
-                                                {solicitud.prioridad ??
-                                                    "NORMAL"}
+                                                {solicitud.prioridad ?? "NORMAL"}
                                             </span>
                                         </td>
 
@@ -871,15 +906,13 @@ function SolicitudesPage({ solicitudes, recargar }) {
                                         <td>
                                             {formatearFecha(
                                                 solicitud.fecha ??
-                                                    solicitud.fechaCreacion ??
-                                                    solicitud.createdAt
+                                                solicitud.fechaCreacion ??
+                                                solicitud.createdAt
                                             )}
                                         </td>
 
                                         <td>
-
                                             <div className="table-actions">
-
                                                 <button
                                                     className="icon-button"
                                                     title="Ver detalle"
@@ -892,31 +925,49 @@ function SolicitudesPage({ solicitudes, recargar }) {
                                                     <Eye size={17} />
                                                 </button>
 
+                                                <button
+                                                    className="icon-button"
+                                                    title="Editar solicitud"
+                                                    disabled={procesando}
+                                                    onClick={() =>
+                                                        abrirEdicion(solicitud)
+                                                    }
+                                                >
+                                                    <Edit size={17} />
+                                                </button>
+
+                                                <button
+                                                    className="icon-button"
+                                                    title="Eliminar solicitud"
+                                                    disabled={procesando}
+                                                    onClick={() =>
+                                                        eliminar(solicitud)
+                                                    }
+                                                >
+                                                    <Trash2 size={17} />
+                                                </button>
                                             </div>
-
                                         </td>
-
                                     </tr>
-
                                 ))}
-
                             </tbody>
-
                         </table>
-
                     </div>
-
                 )}
-
             </section>
 
             {mostrarForm && (
                 <Modal
-                    titulo="Nueva solicitud"
-                    cerrar={() => setMostrarForm(false)}
+                    titulo={
+                        solicitudEditar
+                            ? `Editar solicitud #${solicitudEditar.id}`
+                            : "Nueva solicitud"
+                    }
+                    cerrar={cerrarFormulario}
                 >
                     <SolicitudForm
-                        cerrar={() => setMostrarForm(false)}
+                        solicitudInicial={solicitudEditar}
+                        cerrar={cerrarFormulario}
                         terminado={recargar}
                     />
                 </Modal>
@@ -934,7 +985,6 @@ function SolicitudesPage({ solicitudes, recargar }) {
                     />
                 </Modal>
             )}
-
         </>
     );
 }
@@ -1737,17 +1787,20 @@ function NotificacionesPage({
 /* =====================================================
    FORMULARIO solicitudes
 ===================================================== */
-function SolicitudForm({ cerrar, terminado }) {
-
+function SolicitudForm({
+    cerrar,
+    terminado,
+    solicitudInicial = null,
+}) {
     const [form, setForm] = useState({
-        usuarioId: 1,
-        servicioId: 1,
-        tipo: "",
-        dependencia: "",
-        fecha: "",
-        descripcion: "",
-        prioridad: "NORMAL",
-        responsable: "",
+        usuarioId: solicitudInicial?.usuarioId ?? 1,
+        servicioId: solicitudInicial?.servicioId ?? 1,
+        tipo: solicitudInicial?.tipo ?? solicitudInicial?.tipoSolicitud ?? "",
+        dependencia: solicitudInicial?.dependencia ?? "",
+        fecha: solicitudInicial?.fecha ?? "",
+        descripcion: solicitudInicial?.descripcion ?? "",
+        prioridad: solicitudInicial?.prioridad ?? "NORMAL",
+        responsable: solicitudInicial?.responsable ?? "",
     });
 
     const [guardando, setGuardando] = useState(false);
@@ -1761,48 +1814,45 @@ function SolicitudForm({ cerrar, terminado }) {
     };
 
     const enviar = async (e) => {
-
         e.preventDefault();
 
         setError("");
         setGuardando(true);
 
         try {
-
             const datosSolicitud = {
-                usuarioId: form.usuarioId,
-                servicioId: form.servicioId,
+                usuarioId: Number(form.usuarioId),
+                servicioId: Number(form.servicioId),
                 tipo: form.tipo,
                 dependencia: form.dependencia,
                 descripcion: form.descripcion,
                 prioridad: form.prioridad,
             };
 
-            console.log("Enviando solicitud:", datosSolicitud);
-
-            await crearSolicitud(datosSolicitud);
+            if (solicitudInicial) {
+                await actualizarSolicitud(
+                    solicitudInicial.id,
+                    datosSolicitud
+                );
+            } else {
+                await crearSolicitud(datosSolicitud);
+            }
 
             await terminado();
-
             cerrar();
-
         } catch (err) {
-
-            console.error("Error creando solicitud:", err);
+            console.error("Error guardando solicitud:", err);
 
             setError(
-                err.message || "No fue posible crear la solicitud."
+                err.message || "No fue posible guardar la solicitud."
             );
-
         } finally {
-
             setGuardando(false);
-
         }
     };
+
     return (
         <form className="form-grid" onSubmit={enviar}>
-
             {error && (
                 <div className="form-error">
                     <AlertCircle size={17} />
@@ -1811,7 +1861,6 @@ function SolicitudForm({ cerrar, terminado }) {
             )}
 
             <div className="form-group">
-
                 <label>Tipo de solicitud</label>
 
                 <select
@@ -1820,36 +1869,16 @@ function SolicitudForm({ cerrar, terminado }) {
                     onChange={cambiar}
                     required
                 >
-                    <option value="">
-                        Seleccionar tipo
-                    </option>
-
-                    <option value="MANTENIMIENTO">
-                        Mantenimiento
-                    </option>
-
-                    <option value="ACADEMICA">
-                        Académica
-                    </option>
-
-                    <option value="TECNOLOGICA">
-                        Tecnológica
-                    </option>
-
-                    <option value="ADMINISTRATIVA">
-                        Administrativa
-                    </option>
-
-                    <option value="OTRA">
-                        Otra
-                    </option>
-
+                    <option value="">Seleccionar tipo</option>
+                    <option value="MANTENIMIENTO">Mantenimiento</option>
+                    <option value="ACADEMICA">Académica</option>
+                    <option value="TECNOLOGICA">Tecnológica</option>
+                    <option value="ADMINISTRATIVA">Administrativa</option>
+                    <option value="OTRA">Otra</option>
                 </select>
-
             </div>
 
             <div className="form-group">
-
                 <label>Dependencia</label>
 
                 <input
@@ -1859,25 +1888,21 @@ function SolicitudForm({ cerrar, terminado }) {
                     placeholder="Ej. Sistemas"
                     required
                 />
-
             </div>
 
             <div className="form-group">
-
                 <label>Fecha</label>
 
                 <input
                     type="date"
                     name="fecha"
-                    value={form.fecha}
+                    value={String(form.fecha).slice(0, 10)}
                     onChange={cambiar}
                     required
                 />
-
             </div>
 
             <div className="form-group">
-
                 <label>Prioridad</label>
 
                 <select
@@ -1890,11 +1915,9 @@ function SolicitudForm({ cerrar, terminado }) {
                     <option value="ALTA">Alta</option>
                     <option value="URGENTE">Urgente</option>
                 </select>
-
             </div>
 
             <div className="form-group form-group-full">
-
                 <label>Descripción</label>
 
                 <textarea
@@ -1905,11 +1928,9 @@ function SolicitudForm({ cerrar, terminado }) {
                     placeholder="Describe detalladamente tu solicitud..."
                     required
                 />
-
             </div>
 
             <div className="form-group">
-
                 <label>Responsable</label>
 
                 <input
@@ -1918,15 +1939,14 @@ function SolicitudForm({ cerrar, terminado }) {
                     onChange={cambiar}
                     placeholder="Responsable asignado"
                 />
-
             </div>
 
             <div className="form-actions">
-
                 <button
                     type="button"
                     className="secondary-button"
                     onClick={cerrar}
+                    disabled={guardando}
                 >
                     Cancelar
                 </button>
@@ -1938,22 +1958,19 @@ function SolicitudForm({ cerrar, terminado }) {
                 >
                     {guardando ? (
                         <>
-                            <RefreshCw
-                                size={17}
-                                className="spin"
-                            />
+                            <RefreshCw size={17} className="spin" />
                             Guardando...
                         </>
                     ) : (
                         <>
                             <Save size={17} />
-                            Registrar solicitud
+                            {solicitudInicial
+                                ? "Guardar cambios"
+                                : "Registrar solicitud"}
                         </>
                     )}
                 </button>
-
             </div>
-
         </form>
     );
 }
@@ -3027,6 +3044,398 @@ function PageHeader({
             )}
 
         </section>
+    );
+}
+
+function EventosPage({ eventos, recargar }) {
+    const [busqueda, setBusqueda] = useState("");
+    const [mostrarForm, setMostrarForm] = useState(false);
+    const [eventoEditar, setEventoEditar] = useState(null);
+    const [procesando, setProcesando] = useState(false);
+    const [error, setError] = useState("");
+
+    const filtrados = (eventos || []).filter((evento) => {
+        const texto = busqueda.toLowerCase();
+
+        return (
+            String(evento.id ?? "").toLowerCase().includes(texto) ||
+            String(evento.titulo ?? "").toLowerCase().includes(texto) ||
+            String(evento.descripcion ?? "").toLowerCase().includes(texto) ||
+            String(evento.ubicacion ?? "").toLowerCase().includes(texto) ||
+            String(evento.estado ?? "").toLowerCase().includes(texto)
+        );
+    });
+
+    const abrirEdicion = (evento) => {
+        setEventoEditar(evento);
+        setMostrarForm(true);
+    };
+
+    const cerrarFormulario = () => {
+        setMostrarForm(false);
+        setEventoEditar(null);
+    };
+
+    const eliminar = async (evento) => {
+        const confirmar = window.confirm(
+            `¿Deseas eliminar el evento "${evento.titulo}"?`
+        );
+
+        if (!confirmar) return;
+
+        setProcesando(true);
+        setError("");
+
+        try {
+            await eliminarEvento(evento.id);
+            await recargar();
+        } catch (err) {
+            setError(err.message || "No fue posible eliminar el evento");
+        } finally {
+            setProcesando(false);
+        }
+    };
+
+    return (
+        <>
+            <PageHeader
+                eyebrow="ACTIVIDADES UNIVERSITARIAS"
+                titulo="Eventos"
+                descripcion="Registra, consulta, edita y administra los eventos programados dentro del campus."
+                icon={<CalendarDays size={27} />}
+                boton="Nuevo evento"
+                onClick={() => {
+                    setEventoEditar(null);
+                    setMostrarForm(true);
+                }}
+            />
+
+            {error && (
+                <div className="error-banner">
+                    <AlertCircle size={18} />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            <section className="content-card">
+                <div className="table-toolbar">
+                    <div className="search-box">
+                        <Search size={18} />
+                        <input
+                            type="text"
+                            placeholder="Buscar evento..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                        />
+                    </div>
+
+                    <button
+                        className="secondary-button"
+                        onClick={recargar}
+                        disabled={procesando}
+                    >
+                        <RefreshCw size={17} />
+                        Actualizar
+                    </button>
+                </div>
+
+                {filtrados.length === 0 ? (
+                    <div className="empty-state">
+                        <CalendarDays size={42} />
+                        <h3>No hay eventos</h3>
+                        <p>
+                            No se encontraron eventos registrados con esa búsqueda.
+                        </p>
+
+                        <button
+                            className="primary-button"
+                            onClick={() => {
+                                setEventoEditar(null);
+                                setMostrarForm(true);
+                            }}
+                            disabled={procesando}
+                        >
+                            <Plus size={18} />
+                            Crear evento
+                        </button>
+                    </div>
+                ) : (
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Ubicación</th>
+                                    <th>Fecha de inicio</th>
+                                    <th>Fecha de finalización</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {filtrados.map((evento) => (
+                                    <tr key={evento.id}>
+                                        <td>
+                                            <strong>#{evento.id}</strong>
+                                        </td>
+
+                                        <td>{evento.titulo ?? "Sin título"}</td>
+
+                                        <td>{evento.ubicacion ?? "Sin ubicación"}</td>
+
+                                        <td>
+                                            {formatearFecha(
+                                                evento.fechaInicio ??
+                                                evento.fecha_inicio
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            {formatearFecha(
+                                                evento.fechaFin ??
+                                                evento.fecha_fin
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            <span className="priority-badge">
+                                                {evento.estado ?? "Sin estado"}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div className="table-actions">
+                                                <button
+                                                    className="icon-button"
+                                                    title="Editar evento"
+                                                    disabled={procesando}
+                                                    onClick={() =>
+                                                        abrirEdicion(evento)
+                                                    }
+                                                >
+                                                    <Edit size={17} />
+                                                </button>
+
+                                                <button
+                                                    className="icon-button"
+                                                    title="Eliminar evento"
+                                                    disabled={procesando}
+                                                    onClick={() =>
+                                                        eliminar(evento)
+                                                    }
+                                                >
+                                                    <Trash2 size={17} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
+
+            {mostrarForm && (
+                <Modal
+                    titulo={
+                        eventoEditar
+                            ? `Editar evento #${eventoEditar.id}`
+                            : "Nuevo evento"
+                    }
+                    cerrar={cerrarFormulario}
+                >
+                    <EventoForm
+                        eventoInicial={eventoEditar}
+                        cerrar={cerrarFormulario}
+                        terminado={recargar}
+                    />
+                </Modal>
+            )}
+        </>
+    );
+}
+
+function EventoForm({ eventoInicial, cerrar, terminado }) {
+    const [titulo, setTitulo] = useState(eventoInicial?.titulo ?? "");
+    const [descripcion, setDescripcion] = useState(
+        eventoInicial?.descripcion ?? ""
+    );
+    const [fechaInicio, setFechaInicio] = useState(
+        (eventoInicial?.fechaInicio ?? eventoInicial?.fecha_inicio ?? "")
+            .slice(0, 16)
+    );
+    const [fechaFin, setFechaFin] = useState(
+        (eventoInicial?.fechaFin ?? eventoInicial?.fecha_fin ?? "")
+            .slice(0, 16)
+    );
+    const [ubicacion, setUbicacion] = useState(
+        eventoInicial?.ubicacion ?? ""
+    );
+    const [organizadorId, setOrganizadorId] = useState(
+        eventoInicial?.organizadorId == null
+            ? ""
+            : String(eventoInicial.organizadorId)
+    );
+    const [procesando, setProcesando] = useState(false);
+    const [error, setError] = useState("");
+
+    const guardar = async (e) => {
+        e.preventDefault();
+        setError("");
+
+        if (new Date(fechaFin) <= new Date(fechaInicio)) {
+            setError(
+                "La fecha final debe ser posterior a la fecha inicial"
+            );
+            return;
+        }
+
+        const datos = {
+            titulo: titulo.trim(),
+            descripcion: descripcion.trim(),
+            fechaInicio,
+            fechaFin,
+            ubicacion: ubicacion.trim(),
+            organizadorId: organizadorId
+                ? Number(organizadorId)
+                : null,
+        };
+
+        if (!datos.titulo || !datos.ubicacion ||
+            !fechaInicio || !fechaFin) {
+            setError("Completa todos los campos obligatorios");
+            return;
+        }
+
+        setProcesando(true);
+
+        try {
+            if (eventoInicial) {
+                await actualizarEvento(eventoInicial.id, datos);
+            } else {
+                await crearEvento(datos);
+            }
+
+            await terminado();
+            cerrar();
+        } catch (err) {
+            setError(err.message || "No fue posible guardar el evento");
+        } finally {
+            setProcesando(false);
+        }
+    };
+
+    return (
+        <form onSubmit={guardar} className="form-grid">
+            {error && (
+                <div className="error-banner">
+                    <AlertCircle size={18} />
+                    <span>{error}</span>
+                </div>
+            )}
+
+            <div className="form-group">
+                <label htmlFor="evento-titulo">Título *</label>
+                <input
+                    id="evento-titulo"
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    required
+                    maxLength={255}
+                    disabled={procesando}
+                />
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="evento-descripcion">Descripción</label>
+                <textarea
+                    id="evento-descripcion"
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                    maxLength={1000}
+                    rows={3}
+                    disabled={procesando}
+                />
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="evento-inicio">Fecha y hora de inicio *</label>
+                <input
+                    id="evento-inicio"
+                    type="datetime-local"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    required
+                    disabled={procesando}
+                />
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="evento-fin">
+                    Fecha y hora de finalización *
+                </label>
+                <input
+                    id="evento-fin"
+                    type="datetime-local"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    required
+                    disabled={procesando}
+                />
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="evento-ubicacion">Ubicación *</label>
+                <input
+                    id="evento-ubicacion"
+                    value={ubicacion}
+                    onChange={(e) => setUbicacion(e.target.value)}
+                    required
+                    disabled={procesando}
+                />
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="evento-organizador">
+                    ID del organizador (opcional)
+                </label>
+                <input
+                    id="evento-organizador"
+                    type="number"
+                    min="1"
+                    value={organizadorId}
+                    onChange={(e) => setOrganizadorId(e.target.value)}
+                    disabled={procesando}
+                />
+            </div>
+
+            <div className="form-actions">
+                <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={cerrar}
+                    disabled={procesando}
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="submit"
+                    className="primary-button"
+                    disabled={procesando}
+                >
+                    <Save size={17} />
+                    {procesando
+                        ? "Guardando..."
+                        : eventoInicial
+                            ? "Guardar cambios"
+                            : "Crear evento"}
+                </button>
+            </div>
+        </form>
     );
 }
 

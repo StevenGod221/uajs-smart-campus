@@ -279,27 +279,26 @@ export const notificacionesApi = {
 // ==========================================
 
 export const eventosApi = {
-
     listar: () =>
-        request("/api/events"),
+        request("/api/eventos"),
 
     obtener: (id) =>
-        request(`/api/events/${id}`),
+        request(`/api/eventos/${id}`),
 
     crear: (data) =>
-        request("/api/events", {
+        request("/api/eventos", {
             method: "POST",
             body: JSON.stringify(data),
         }),
 
     actualizar: (id, data) =>
-        request(`/api/events/${id}`, {
+        request(`/api/eventos/${id}`, {
             method: "PUT",
             body: JSON.stringify(data),
         }),
 
     eliminar: (id) =>
-        request(`/api/events/${id}`, {
+        request(`/api/eventos/${id}`, {
             method: "DELETE",
         }),
 };

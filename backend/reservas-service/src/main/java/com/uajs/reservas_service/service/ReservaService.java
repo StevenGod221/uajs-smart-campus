@@ -132,24 +132,38 @@ public class ReservaService {
                 reserva.getObservaciones()
         );
     }
-    public ReservaResponse actualizar(Long id, ReservaRequest request) {
+        public ReservaResponse actualizar(Long id, ReservaRequest request) {
 
-    Reserva reserva = repository.findById(id)
-            .orElseThrow(() ->
-                    new RuntimeException("Reserva no encontrada"));
+        Reserva reserva = repository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Reserva no encontrada"));
 
-    if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
-        throw new IllegalArgumentException(
-                "La fecha final debe ser posterior a la fecha inicial"
-        );
+        if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
+            throw new IllegalArgumentException(
+                    "La fecha final debe ser posterior a la fecha inicial");
+        }
+
+        boolean existeCruce =
+                repository.existsByRecursoIdAndIdNotAndFechaInicioLessThanAndFechaFinGreaterThan(
+                        request.getRecursoId(),
+                        id,
+                        request.getFechaFin(),
+                        request.getFechaInicio()
+                );
+
+        if (existeCruce) {
+            throw new IllegalArgumentException(
+                    "El recurso ya está reservado en ese horario");
+        }
+
+        reserva.setUsuarioId(request.getUsuarioId());
+        reserva.setRecursoId(request.getRecursoId());
+        reserva.setFechaInicio(request.getFechaInicio());
+        reserva.setFechaFin(request.getFechaFin());
+        reserva.setObservaciones(request.getObservaciones());
+
+        return convertir(repository.save(reserva));
     }
 
-    reserva.setUsuarioId(request.getUsuarioId());
-    reserva.setRecursoId(request.getRecursoId());
-    reserva.setFechaInicio(request.getFechaInicio());
-    reserva.setFechaFin(request.getFechaFin());
-    reserva.setObservaciones(request.getObservaciones());
 
-    return convertir(repository.save(reserva));
-}
 }

@@ -38,6 +38,28 @@ public class EventoService {
         return convertir(repository.save(evento));
     }
 
+public EventoResponse actualizar(Long id, EventoRequest request) {
+
+    if (!request.getFechaFin().isAfter(request.getFechaInicio())) {
+        throw new IllegalArgumentException(
+                "La fecha final debe ser posterior a la fecha inicial"
+        );
+    }
+
+    Evento evento = repository.findById(id)
+            .orElseThrow(() ->
+                    new RuntimeException("Evento no encontrado"));
+
+    evento.setTitulo(request.getTitulo());
+    evento.setDescripcion(request.getDescripcion());
+    evento.setFechaInicio(request.getFechaInicio());
+    evento.setFechaFin(request.getFechaFin());
+    evento.setUbicacion(request.getUbicacion());
+    evento.setOrganizadorId(request.getOrganizadorId());
+
+    return convertir(repository.save(evento));
+}
+
     public List<EventoResponse> listar() {
 
         return repository.findAll()

@@ -101,9 +101,18 @@ app.use(
     )
 );
 
-// RESERVAS
+// RESERVAS - RUTA EN INGLÉS
 app.use(
     "/api/reservations",
+    crearProxy(
+        "http://localhost:8083",
+        "/api/reservas"
+    )
+);
+
+// RESERVAS - RUTA EN ESPAÑOL
+app.use(
+    "/api/reservas",
     crearProxy(
         "http://localhost:8083",
         "/api/reservas"
@@ -128,7 +137,8 @@ app.use(
     )
 );
 
-// EVENTOS
+
+ // EVENTOS - RUTA EN INGLÉS
 app.use(
     "/api/events",
     crearProxy(
@@ -136,6 +146,16 @@ app.use(
         "/api/eventos"
     )
 );
+
+// EVENTOS - RUTA EN ESPAÑOL
+app.use(
+    "/api/eventos",
+    crearProxy(
+        "http://localhost:8086",
+        "/api/eventos"
+    )
+);
+
 
 // ===============================
 // RUTA NO ENCONTRADA
