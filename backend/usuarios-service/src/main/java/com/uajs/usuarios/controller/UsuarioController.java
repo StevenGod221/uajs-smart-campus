@@ -63,9 +63,10 @@ public class UsuarioController {
         Usuario usuario = resultado.get();
 
         String token = jwtService.generarToken(
-                usuario.getCorreo(),
-                usuario.getRol()
-        );
+        usuario.getId(),
+        usuario.getCorreo(),
+        usuario.getRol()
+);
 
         LoginResponse respuesta = new LoginResponse(
                 "Login exitoso",

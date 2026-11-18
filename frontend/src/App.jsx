@@ -80,6 +80,33 @@ function App() {
     const usuario = usuarioGuardado
         ? JSON.parse(usuarioGuardado)
         : null;
+    const rol = String(usuario?.rol || "").trim().toUpperCase();
+
+    const permisosRol = {
+        ADMIN: {
+            administrarRecursos: true,
+            administrarReservas: true,
+            administrarSolicitudes: true,
+            administrarEventos: true,
+            verTodasLasReservas: true
+        },
+        FUNCIONARIO: {
+            administrarRecursos: true,
+            administrarReservas: true,
+            administrarSolicitudes: true,
+            administrarEventos: true,
+            verTodasLasReservas: true
+        },
+        ESTUDIANTE: {
+            administrarRecursos: false,
+            administrarReservas: false,
+            administrarSolicitudes: false,
+            administrarEventos: false,
+            verTodasLasReservas: false
+        }
+    };
+
+    const permisos = permisosRol[rol] || permisosRol.ESTUDIANTE;
 
     const cargarDatos = async () => {
         setCargando(true);
@@ -404,6 +431,7 @@ function App() {
 
                     {pagina === "recursos" && (
                         <RecursosPage
+                            permisos={permisos}
                             recursos={recursos}
                             abrirCrear={() => setMostrarRecurso(true)}
                             recargar={cargarDatos}
@@ -413,6 +441,8 @@ function App() {
 
                     {pagina === "reservas" && (
                         <ReservasPage
+                            permisos={permisos}
+                            usuario={usuario}
                             reservas={reservas}
                             recursos={recursos}
                             abrirCrear={() => setMostrarReserva(true)}
@@ -423,6 +453,8 @@ function App() {
 
                     {pagina === "solicitudes" && (
     <SolicitudesPage
+                            permisos={permisos}
+                            usuario={usuario}
         solicitudes={solicitudes}
         recargar={cargarDatos}
     />
@@ -439,6 +471,7 @@ function App() {
 
                     {pagina === "eventos" && (
     <EventosPage
+                            permisos={permisos}
         eventos={eventos}
         recargar={cargarDatos}
     />
@@ -467,8 +500,7 @@ function App() {
                     titulo="Nueva reserva"
                     cerrar={() => setMostrarReserva(false)}
                 >
-                    <ReservaForm
-                        recursos={recursos}
+                    <ReservaForm usuario={usuario} permisos={permisos} recursos={recursos}
                         cerrar={() => setMostrarReserva(false)}
                         terminado={cargarDatos}
                     />
@@ -736,7 +768,7 @@ function Dashboard({
         </>
     );
 }
-function SolicitudesPage({ solicitudes, recargar }) {
+function SolicitudesPage({ solicitudes, recargar, permisos, usuario }) {
     const [busqueda, setBusqueda] = useState("");
     const [mostrarForm, setMostrarForm] = useState(false);
     const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
@@ -744,7 +776,13 @@ function SolicitudesPage({ solicitudes, recargar }) {
     const [procesando, setProcesando] = useState(false);
     const [error, setError] = useState("");
 
-    const filtradas = (solicitudes || []).filter((s) => {
+    const solicitudesVisibles = permisos?.administrarSolicitudes
+        ? (solicitudes || [])
+        : (solicitudes || []).filter(
+            (s) => Number(s.usuarioId) === Number(usuario?.id)
+        );
+
+    const filtradas = solicitudesVisibles.filter((s) => {
         const texto = busqueda.toLowerCase();
 
         return (
@@ -965,8 +1003,7 @@ function SolicitudesPage({ solicitudes, recargar }) {
                     }
                     cerrar={cerrarFormulario}
                 >
-                    <SolicitudForm
-                        solicitudInicial={solicitudEditar}
+                    <SolicitudForm usuario={usuario} permisos={permisos} solicitudInicial={solicitudEditar}
                         cerrar={cerrarFormulario}
                         terminado={recargar}
                     />
@@ -1169,6 +1206,8 @@ function ReservasPage({
     recursos,
     abrirCrear,
     recargar,
+    permisos,
+    usuario,
 }) {
     const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
     const [mostrarDetalle, setMostrarDetalle] = useState(false);
@@ -1188,7 +1227,13 @@ function ReservasPage({
     const obtenerRecurso = (recursoId) =>
         recursos.find((r) => Number(r.id) === Number(recursoId));
 
-    const reservasFiltradas = reservas.filter((reserva) => {
+    const reservasVisibles = permisos?.verTodasLasReservas
+        ? (reservas || [])
+        : (reservas || []).filter(
+            (reserva) => Number(reserva.usuarioId) === Number(usuario?.id)
+        );
+
+    const reservasFiltradas = reservasVisibles.filter((reserva) => {
         const recurso = obtenerRecurso(reserva.recursoId);
 
         const texto = `
@@ -1791,9 +1836,11 @@ function SolicitudForm({
     cerrar,
     terminado,
     solicitudInicial = null,
+    usuario,
+    permisos,
 }) {
     const [form, setForm] = useState({
-        usuarioId: solicitudInicial?.usuarioId ?? 1,
+        usuarioId: solicitudInicial?.usuarioId ?? usuario?.id ?? 1,
         servicioId: solicitudInicial?.servicioId ?? 1,
         tipo: solicitudInicial?.tipo ?? solicitudInicial?.tipoSolicitud ?? "",
         dependencia: solicitudInicial?.dependencia ?? "",
@@ -1821,7 +1868,7 @@ function SolicitudForm({
 
         try {
             const datosSolicitud = {
-                usuarioId: Number(form.usuarioId),
+                usuarioId: permisos?.administrarSolicitudes ? Number(form.usuarioId) : Number(usuario?.id),
                 servicioId: Number(form.servicioId),
                 tipo: form.tipo,
                 dependencia: form.dependencia,
@@ -2484,10 +2531,12 @@ function ReservaForm({
     recursos,
     cerrar,
     terminado,
+    usuario,
+    permisos,
 }) {
 
     const [form, setForm] = useState({
-        usuarioId: "",
+        usuarioId: permisos?.verTodasLasReservas ? "" : String(usuario?.id ?? ""),
         recursoId: "",
         fechaInicio: "",
         fechaFin: "",
@@ -2518,7 +2567,7 @@ function ReservaForm({
         try {
 
             await crearReserva({
-                usuarioId: Number(form.usuarioId),
+                usuarioId: permisos?.verTodasLasReservas ? Number(form.usuarioId) : Number(usuario?.id),
                 recursoId: Number(form.recursoId),
                 fechaInicio: form.fechaInicio,
                 fechaFin: form.fechaFin,
@@ -2553,7 +2602,8 @@ function ReservaForm({
             )}
 
 
-            <div className="form-group">
+            {permisos?.verTodasLasReservas && (
+<div className="form-group">
 
                 <label>
                     ID del usuario
@@ -2571,6 +2621,7 @@ function ReservaForm({
                 />
 
             </div>
+)}
 
 
             <div className="form-group">
@@ -4100,3 +4151,7 @@ function PaginaPrincipal({ onIniciarSesion }) {
 
 
 export default App;
+
+
+
+
